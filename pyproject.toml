@@ -1,0 +1,31 @@
+# fs-rclone
+# pyproject.toml
+# version 0.0.1
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fs-rclone"
+version = "0.0.1"
+authors = [
+    { name="Raygan Henley", email="raygan@raygan.com" },
+]
+description = "Pyfilesystem wrapper for rclone"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/element0/fs_rclone"
+Issues = "https://github.com/element0/fs_rclone/issues"
+
+
+[tool.hatch.version]
+path = "src/fs_rclone/__init__.py"
+
