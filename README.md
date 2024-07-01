@@ -1,52 +1,88 @@
-# Rclone Wrapper for Pyfilesystem
-__version__ = 0.1.0
-
+# Access rclone from a pyfilesystem interface
 I needed this.
+
+__version__ = 0.3.1
+
+
 
 ## About
 
-This wraps `rclone-python` in a `pyfilesystem` interface. If you don't need a `pyfilesystem` interface you don't need `fs_rclone`. So if that's the case you should use `rclone-python` or `rclone` directly.
+This gives you a `pyfilesystem` object with an `rclone` remote for a backend. So any backend you can use with rclone, you can use with pyfilesystem.
+
+Internally it uses another project, `rclone-python` as middleware to `rclone`. If you don't need a `pyfilesystem` interface but you want to work with `rclone` via python, you should check out `rclone-python`.
+
+### Usage
+
+This assumes you've run the external program `rclone config` and configured a remote called `dropbox`.
+
+
+    >>> from fs.rclonefs import RcloneFS
+    >>> my_remote = RcloneFS('dropbox:')
+    >>> my_remote.listdir('/')
+    >>> my_remote.getinfo('/that_file_over_there.mp4')
+
+
+### Status
+
+Implemented:
+- getinfo()
+- listdir()
+- isdir()
+
+TBD:
+- URI opener
+- all other methods
 
 ## Dependencies
 
-    pip install fs_rclone
+#### Automatically installed: rclone-python
 
-...installs `rclone-python` automatically.
+This handy tool controls `rclone` from python. 
 
-You [install rclone](https://rclone.org/install/) on your own.
+[pypi.org/project/rclone-python/](https://pypi.org/project/rclone-python/)
 
+[github.com/Johannes11833/rclone_python](https://github.com/Johannes11833/rclone_python)
 
-#### rclone-python
+#### Manually installed: rclone v1.67.0
 
-This dep controls `rclone` from python. 
+This _is_ rclone. Control a wide variety of cloud storage with this puppy.
 
-    [https://pypi.org/project/rclone-python/](https://pypi.org/project/rclone-python/)
+[github.com/rclone/rclone](https://github.com/rclone/rclone)
+[Install rclone on your own.](https://rclone.org/install/)
 
-    [https://github.com/Johannes11833/rclone_python](https://github.com/Johannes11833/rclone_python)
+__version_used_by_this_project__ = _rclone-v1.67.0-linux-amd64_
 
-#### Rclone v1.67.0
-
-This dep _is_ rclone. Control a wide variety of cloud storage with this puppy.
-
-    [https://github.com/rclone/rclone](https://github.com/rclone/rclone)
-
-__reference_distribution__ = _rclone-v1.67.0-linux-amd64_
-
-[Installation](https://rclone.org/install/)
-
-
-#### pyfilesystem 2.4.12
+#### Automatically installed: pyfilesystem 2.4.12
 
 The Mac-Daddy of all file system abstractions -- besides rclone -- and besides FUSE. But _absolutely_ one of the number ones.
 
-`pyfilesystem` and `rclone` need to have a baby. Which is `fs_rclone` IMHO.
+Installed automagically with fs-rclone if'n y'all don't already have it.
+
+
+## Tools
+
+Added a `makepy` tool in the tools directory which extracts the second cell from a jupyter notebook and saves a python file.
+
+    >>> from makepy import makepy
+    >>> makepy('rclonefs','opener')
+
+It takes one or more filenames from the working directory -- without the .ipynb extension -- and exports the 2nd cell to a python file with the same base name.
+
+(Not packaged with the pip distro. Find it in the git repo.)
 
 
 ## Changelog
+
+0.3.1 Fixed `fs` namespace packaging.
+
+0.3.0 Add `getinfo()`, `listdir()`, `isdir()`. Add `makepy` tool. Add `Devnotes.ipynb`.
+
+0.2.0 Fix project name for pyfilesystem style. Add src RcloneFS.ipynb and opener.ipynb.
+
+0.1.2 Update README
 
 0.1.0 Add dependencies to `pyproject.toml`. Add `SoftBOM` (software bill of materials). Delete test code.
 
 0.0.1 fix bug in example::add_one
 
 0.0.0 configure package files
-

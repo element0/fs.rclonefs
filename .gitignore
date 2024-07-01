@@ -1,2 +1,4 @@
 *checkpoint*
 dist/*
+_venv
+.venv
