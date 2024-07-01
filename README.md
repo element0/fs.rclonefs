@@ -43,7 +43,9 @@ This handy tool controls `rclone` from python.
 
 [github.com/Johannes11833/rclone_python](https://github.com/Johannes11833/rclone_python)
 
-#### Manually installed: rclone v1.67.0
+#### Not automtically installed: rclone v1.67.0
+
+YOU NEED TO INSTALL THIS SEPARATELY
 
 This _is_ rclone. Control a wide variety of cloud storage with this puppy.
 
@@ -54,21 +56,21 @@ __version_used_by_this_project__ = _rclone-v1.67.0-linux-amd64_
 
 #### Automatically installed: pyfilesystem 2.4.12
 
-The Mac-Daddy of all file system abstractions -- besides rclone -- and besides FUSE. But _absolutely_ one of the number ones.
+The Mac-Daddy of all file system abstractions -- along side rclone -- and along side FUSE. But _absolutely_ number one of the number ones.
 
 Installed automagically with fs-rclone if'n y'all don't already have it.
 
 
 ## Tools
 
-Added a `makepy` tool in the tools directory which extracts the second cell from a jupyter notebook and saves a python file.
+Added a `makepy` tool in the tools directory which extracts the secondmost cell from a jupyter notebook and saves a python file.
 
     >>> from makepy import makepy
     >>> makepy('rclonefs','opener')
 
-It takes one or more filenames from the working directory -- without the .ipynb extension -- and exports the 2nd cell to a python file with the same base name.
+It takes a variable length of filename arguments -- from the working directory, without the .ipynb extension -- and exports the 2nd cell of each to python files with the same base names.
 
-(Not packaged with the pip distro. Find it in the git repo.)
+(Not packaged with the pip distro. It's it in the `tools` folder of the git repo.)
 
 
 ## Changelog
