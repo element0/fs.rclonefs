@@ -52,6 +52,8 @@ This _is_ rclone. Control a wide variety of cloud storage with this puppy.
 
 __version_used_by_this_project__ = _rclone-v1.67.0-linux-amd64_
 
+<strong>Note:</strong> You might be tempted to use another version. Please use 1.67 because I've confirmed that refresh tokens with Dropbox work better in 1.67. (I experienced a problem with 1.50 in which refresh tokens weren't being created during the interactive Oauth flow.)
+
 #### Automatically installed: pyfilesystem 2.4.12
 
 The Mac-Daddy of all file system abstractions -- besides rclone -- and besides FUSE. But _absolutely_ one of the number ones.

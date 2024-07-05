@@ -3,6 +3,7 @@
 """Pyfilesystem2 access to rclone remotes using rclone-python.
 """
 
+from .rclone import Rclone
 from .rclonefs import RcloneFS
 
 __version__ = (
