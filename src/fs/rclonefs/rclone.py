@@ -36,11 +36,17 @@ class Rclone:
     def delete(self, path):
         self._run_command(["delete", path])
 
+    def deletefile(self, path):
+        self._run_command(["deletefile", path])
+
     def mkdir(self, path):
         self._run_command(["mkdir", path])
 
     def rmdir(self, path):
         self._run_command(["rmdir", path])
+
+    def purge(self, path):
+        self._run_command(["purge", path])
 
     def check(self, source, destination):
         return self._run_command(["check", source, destination])
