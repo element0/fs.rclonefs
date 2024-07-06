@@ -7,52 +7,54 @@ class Rclone:
         self.rclone_path = rclone_path
         self.config_file = config_file
 
-    def _run_command(self, args):
+    def _run_command(self, args, flags=None):
         command = [self.rclone_path]
         if self.config_file:
             command.extend(["--config", self.config_file])
         command.extend(args)
+        if flags:
+            command.extend(flags)
         result = subprocess.run(command, capture_output=True, text=True)
         if result.returncode != 0:
             raise Exception(f"RClone command failed: {result.stderr}")
         return result.stdout
 
-    def list_remotes(self):
-        return self._run_command(["listremotes"]).splitlines()
+    def list_remotes(self, flags=None):
+        return self._run_command(["listremotes"], flags).splitlines()
 
-    def list_files(self, remote_path):
-        output = self._run_command(["lsjson", remote_path])
+    def list_files(self, remote_path, flags=None):
+        output = self._run_command(["lsjson", remote_path], flags)
         return json.loads(output)
 
-    def copy(self, source, destination):
-        self._run_command(["copy", source, destination])
+    def copy(self, source, destination, flags=None):
+        self._run_command(["copy", source, destination], flags)
 
-    def move(self, source, destination):
-        self._run_command(["move", source, destination])
+    def move(self, source, destination, flags=None):
+        self._run_command(["move", source, destination], flags)
 
-    def sync(self, source, destination):
-        self._run_command(["sync", source, destination])
+    def sync(self, source, destination, flags=None):
+        self._run_command(["sync", source, destination], flags)
 
-    def delete(self, path):
-        self._run_command(["delete", path])
+    def delete(self, path, flags=None):
+        self._run_command(["delete", path], flags)
 
-    def deletefile(self, path):
-        self._run_command(["deletefile", path])
+    def deletefile(self, path, flags=None):
+        self._run_command(["deletefile", path], flags)
 
-    def mkdir(self, path):
-        self._run_command(["mkdir", path])
+    def mkdir(self, path, flags=None):
+        self._run_command(["mkdir", path], flags)
 
-    def rmdir(self, path):
-        self._run_command(["rmdir", path])
+    def rmdir(self, path, flags=None):
+        self._run_command(["rmdir", path], flags)
 
-    def purge(self, path):
-        self._run_command(["purge", path])
+    def purge(self, path, flags=None):
+        self._run_command(["purge", path], flags)
 
-    def check(self, source, destination):
-        return self._run_command(["check", source, destination])
+    def check(self, source, destination, flags=None):
+        return self._run_command(["check", source, destination], flags)
 
-    def version(self):
-        return self._run_command(["version"]).strip()
+    def version(self, flags=None):
+        return self._run_command(["version"], flags).strip()
 
     def set_config_file(self, config_file):
         self.config_file = config_file
@@ -60,9 +62,9 @@ class Rclone:
     def get_config_file(self):
         return self.config_file
 
-    def get_remote_info(self, remote: str) -> dict:
+    def get_remote_info(self, remote: str, flags=None) -> dict:
         try:
-            output = self._run_command(["about", remote, "--json"])
+            output = self._run_command(["about", remote, "--json"], flags)
             return json.loads(output)
         except Exception as e:
             print(f"Failed to get remote info: {e}")

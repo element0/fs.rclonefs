@@ -3,11 +3,11 @@
 
 [project]
 name = "fs.rclonefs"
-version = "0.3.1"
+version = "0.4.0"
 authors = [
     { name="Raygan Henley", email="raygan@raygan.com" },
 ]
-description = "Pyfilesystem interface for rclone remotes."
+description = "Pyfilesystem interface to control rclone remotes."
 readme = "README.md"
 requires-python = ">=3.10"
 classifiers = [
@@ -16,7 +16,6 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "rclone-python~=0.1.12",
     "fs~=2.4.12"
 ]
 

@@ -7,27 +7,38 @@ __version__ = 0.3.1
 
 ## About
 
-This gives you a `pyfilesystem` object with an `rclone` remote for a backend. So any backend you can use with rclone, you can use with pyfilesystem.
+This gives you a `pyfilesystem` object with an `rclone` remote for a backend. So any backend you can use with rclone, you can use with pyfilesystem. (You need to configure rclone separately.)
 
-Internally it uses another project, `rclone-python` as middleware to `rclone`. If you don't need a `pyfilesystem` interface but you want to work with `rclone` via python, you should check out `rclone-python`.
 
 ### Usage
 
-This assumes you've run the external program `rclone config` and configured a remote called `dropbox`.
-
+This assumes you've run the external program `rclone config` and configured a remote called `dropbox:`.
 
     >>> from fs.rclonefs import RcloneFS
     >>> my_remote = RcloneFS('dropbox:')
     >>> my_remote.listdir('/')
-    >>> my_remote.getinfo('/that_file_over_there.mp4')
+    >>> my_remote.getinfo('/that file over there.mp4')
+    >>> my_remote.remove('/that file over there.mp4')
+    >>> my_remote.getinfo('/some folder', namespaces=['details'])
 
+Use the 'storage' namespace to report directory sizes.
+
+    >>> my_remote.getinfo('/gigantor', namespaces=['storage'])
+
+The `removetree()` method uses rclone's `purge` command -- which should make quick work of directories and their contents -- really quick work if the rclone backend supports the command (Dropbox does). (The pyfilesystem default does a path walk and removes every item individually which causes a storm of API calls to the backend and takes forever to complete with large trees, leaving rclone running for several minutes and keeping you hanging.) 
+
+### USE AT YOUR OWN RISK
+
+Things might not work as expected. Like any other household product, you should test it on a small out-of-the-way piece of material first before dumping it all over everything.
 
 ### Status
 
 Implemented:
 - getinfo()
 - listdir()
-- isdir()
+- remove()
+- removedir()
+- removetree()
 
 TBD:
 - URI opener
@@ -35,43 +46,44 @@ TBD:
 
 ## Dependencies
 
-#### Automatically installed: rclone-python
+#### Automatically installed: pyfilesystem 2.4.12
 
-This handy tool controls `rclone` from python. 
+The Mac-Daddy of all file system abstractions -- along side rclone -- and FUSE. But _absolutely_ number one of the number ones.
 
-[pypi.org/project/rclone-python/](https://pypi.org/project/rclone-python/)
+Installed automagically with fs-rclone if'n y'all don't already have it.
 
-[github.com/Johannes11833/rclone_python](https://github.com/Johannes11833/rclone_python)
+#### You need to install: rclone v1.67.0
 
-#### Manually installed: rclone v1.67.0
-
-This _is_ rclone. Control a wide variety of cloud storage with this puppy.
+Control a wide variety of cloud storage with this puppy.
 
 [github.com/rclone/rclone](https://github.com/rclone/rclone)
 [Install rclone on your own.](https://rclone.org/install/)
 
 __version_used_by_this_project__ = _rclone-v1.67.0-linux-amd64_
 
-#### Automatically installed: pyfilesystem 2.4.12
-
-The Mac-Daddy of all file system abstractions -- besides rclone -- and besides FUSE. But _absolutely_ one of the number ones.
-
-Installed automagically with fs-rclone if'n y'all don't already have it.
-
 
 ## Tools
 
-Added a `makepy` tool in the tools directory which extracts the second cell from a jupyter notebook and saves a python file.
+The `Rclone` object class controls `rclone` on your system.
+
+    >>>from fs.rclonefs import Rclone
+    >>>rclone = Rclone()
+    >>>rclone.list_files('myremote:')
+
+
+A `makepy` tool in the tools directory extracts the second cell from a jupyter notebook and saves it as a python file.
 
     >>> from makepy import makepy
     >>> makepy('rclonefs','opener')
 
-It takes one or more filenames from the working directory -- without the .ipynb extension -- and exports the 2nd cell to a python file with the same base name.
+It takes one or more filenames from the working directory (without the .ipynb extension) and exports the 2nd cell of each to python files with the same base names.
 
-(Not packaged with the pip distro. Find it in the git repo.)
+(`makepy` is not packaged with the pip distro. Find it in the git repo.)
 
 
 ## Changelog
+
+0.4.0 Add `remove()`, `removedir()`, `removetree()`. Add `Rclone` class. Add `storage` namespace for getinfo(). Fix datetime format in getinfo.
 
 0.3.1 Fixed `fs` namespace packaging.
 

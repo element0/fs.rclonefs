@@ -2,27 +2,35 @@ from fs.base import FS
 from fs.info import Info
 from fs.permissions import Permissions
 from fs.enums import ResourceType
-from fs.errors import DirectoryExists, ResourceNotFound
+from fs.errors import DirectoryExists, ResourceNotFound, DirectoryNotEmpty
+from fs.errors import DirectoryExpected, RemoveRootError
+from fs.errors import FileExpected
 from fs.path import split, normpath
 from datetime import datetime
 import json
-from typing import List, Union
+from typing import List, Union, Optional
 
 from rclone import Rclone  # Assuming this is how you've imported the previous class
 
 class RcloneFS(FS):
-    def __init__(self, remote: str, rclone: Rclone = None):
+    def __init__(self, remote: str, rclone: Optional[Rclone] = None, config_file: Optional[str] = None):
         super().__init__()
-        self.remote = remote
-        self.rclone = rclone or Rclone()
+        self.remote = remote.rstrip(':')
+        if rclone is None:
+            self.rclone = Rclone(config_file=config_file)
+        else:
+            self.rclone = rclone
+            if config_file:
+                self.rclone.set_config_file(config_file)
 
     def _path(self, path: str) -> str:
         return f"{self.remote}:{normpath(path).lstrip('/')}"
+    
 
     def getinfo(self, path: str, namespaces=None) -> Info:
         path = normpath(path)
         if path == '/':
-            return self._root_info()
+            return self._root_info(namespaces)
         
         parent_dir, name = split(path)
         try:
@@ -30,31 +38,34 @@ class RcloneFS(FS):
             files = self.rclone.list_files(parent_path)
             for file_info in files:
                 if file_info['Name'] == name:
-                    return self._make_info(file_info)
+                    return self._make_info(path, file_info, namespaces)
             raise ResourceNotFound(path)
         except Exception as e:
             raise ResourceNotFound(path)
 
-    def _root_info(self) -> Info:
+    def _root_info(self, namespaces=None) -> Info:
         try:
             # Attempt to get remote info
-            remote_info = self.rclone.get_remote_info(self.remote)
+            remote_info = self.rclone.get_remote_info(self.remote+':')
             
             raw_info = {
                 "basic": {
                     "name": "",
                     "is_dir": True
-                },
-                "details": {
-                    "type": ResourceType.directory,
-                    "size": remote_info.get('total_space', 0),  # Total space if available
-                    "used": remote_info.get('used_space', 0),  # Used space if available
-                    "free": remote_info.get('free_space', 0),  # Free space if available
                 }
             }
+
+            if namespaces and 'details' in namespaces:
+                raw_info["details"] = {
+                    "type": ResourceType.directory,
+                    "size": remote_info.get('total', 0),  # Total space if available
+                    "used": remote_info.get('used', 0),  # Used space if available
+                    "free": remote_info.get('free', 0),  # Free space if available
+                }
             
-            if 'modified' in remote_info:
-                raw_info['details']['modified'] = self._parse_time(remote_info['modified'])
+            
+                if 'modified' in remote_info:
+                    raw_info['details']['modified'] = self._parse_time(remote_info['modified'])
 
             return Info(raw_info)
         except Exception:
@@ -63,30 +74,59 @@ class RcloneFS(FS):
                 "basic": {
                     "name": "",
                     "is_dir": True
-                },
-                "details": {
-                    "type": ResourceType.directory,
                 }
             })
 
-    def _make_info(self, file_info: dict) -> Info:
+    def _make_info(self, path: str, file_info: dict, namespaces: Optional[list]=None) -> Info:
         raw_info = {
             "basic": {
                 "name": file_info['Name'],
                 "is_dir": file_info['IsDir']
-            },
-            "details": {
+            }
+        }
+
+        if namespaces and 'details' in namespaces:
+            raw_info["details"] = {
                 "type": ResourceType.directory if file_info['IsDir'] else ResourceType.file,
                 "size": file_info['Size'],
                 "modified": self._parse_time(file_info['ModTime'])
             }
-        }
-        if 'Mode' in file_info:
-            raw_info['access'] = {
-                "permissions": Permissions(mode=int(file_info['Mode'], 8)).dump()
-            }
+        
+            if 'Mode' in file_info:
+                raw_info['access'] = {
+                    "permissions": Permissions(mode=int(file_info['Mode'], 8)).dump()
+                }
+
+        if namespaces and 'rclone' in namespaces:
+            raw_info["rclone"] = file_info
+                        
+        if namespaces and 'storage' in namespaces:
+
+            if file_info['IsDir']:
+                cumulative_size = self._calculate_dir_size(path)
+            else:
+                cumulative_size = file_info['Size']
+            
+            if 'storage' not in raw_info:
+                raw_info['storage'] = {}
+            raw_info['storage']['size'] = cumulative_size
+        
         return Info(raw_info)
 
+    def _calculate_dir_size(self, dir_path: str) -> int:
+        cumulative_size = 0
+        try:
+            files = self.rclone.list_files(self._path(dir_path),
+                                           flags=['--recursive',
+                                                  '--files-only'
+                                                 ])
+            for file_info in files:
+                cumulative_size += file_info.get('Size', 0)
+        except Exception:
+            # If there's an error, we'll just return 0 as the size
+            pass
+        return cumulative_size
+    
     def _parse_time(self, time_str: str) -> datetime:
         formats = [
             "%Y-%m-%dT%H:%M:%SZ",  # Dropbox format
@@ -95,7 +135,11 @@ class RcloneFS(FS):
         ]
         for fmt in formats:
             try:
-                return datetime.strptime(time_str, fmt)
+                dt = datetime.strptime(time_str, fmt)
+                # Convert to UTC if timezone-aware
+                if dt.tzinfo is not None:
+                    dt = dt.astimezone(timezone.utc)
+                return dt.timestamp()
             except ValueError:
                 continue
         raise ValueError(f"Time '{time_str}' doesn't match any known format")
@@ -122,17 +166,31 @@ class RcloneFS(FS):
 
     def remove(self, path: str):
         path = normpath(path)
+        if self.isdir(path):
+            raise FileExpected(path)
         try:
-            self.rclone.delete(self._path(path))
+            self.rclone.deletefile(self._path(path))
         except Exception as e:
-            raise ResourceNotFound(path)
+            if 'not found' in str(e):
+                raise ResourceNotFound(path)
+            raise
 
     def removedir(self, path: str):
         path = normpath(path)
+        if path == '/':
+            raise RemoveRootError(path)
         try:
             self.rclone.rmdir(self._path(path))
         except Exception as e:
-            raise ResourceNotFound(path)
+            msg = str(e)
+            if 'directory not empty' in msg:
+                raise DirectoryNotEmpty(path)
+            if 'directory not found' in msg:
+                raise ResourceNotFound(path)
+            if 'not a directory' in msg:
+                raise DirectoryExpected(path)
+            # fallback
+            raise
 
     def setinfo(self, path: str, info):
         path = normpath(path)
