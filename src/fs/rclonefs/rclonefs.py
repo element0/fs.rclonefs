@@ -9,8 +9,10 @@ from fs.path import split, normpath
 from datetime import datetime
 import json
 from typing import List, Union, Optional
+from fs.tempfs import TempFS
 
 from rclone import Rclone  # Assuming this is how you've imported the previous class
+from file import RcloneFile
 
 class RcloneFS(FS):
     def __init__(self, remote: str, rclone: Optional[Rclone] = None, config_file: Optional[str] = None):
@@ -22,6 +24,11 @@ class RcloneFS(FS):
             self.rclone = rclone
             if config_file:
                 self.rclone.set_config_file(config_file)
+        self.temp_fs = TempFS()
+
+    def close(self):
+        super().close()
+        self.temp_fs.close()
 
     def _path(self, path: str) -> str:
         return f"{self.remote}:{normpath(path).lstrip('/')}"
@@ -57,7 +64,7 @@ class RcloneFS(FS):
 
             if namespaces and 'details' in namespaces:
                 raw_info["details"] = {
-                    "type": ResourceType.directory,
+                    "type": int(ResourceType.directory),
                     "size": remote_info.get('total', 0),  # Total space if available
                     "used": remote_info.get('used', 0),  # Used space if available
                     "free": remote_info.get('free', 0),  # Free space if available
@@ -87,7 +94,7 @@ class RcloneFS(FS):
 
         if namespaces and 'details' in namespaces:
             raw_info["details"] = {
-                "type": ResourceType.directory if file_info['IsDir'] else ResourceType.file,
+                "type": int(ResourceType.directory) if file_info['IsDir'] else int(ResourceType.file),
                 "size": file_info['Size'],
                 "modified": self._parse_time(file_info['ModTime'])
             }
@@ -124,7 +131,7 @@ class RcloneFS(FS):
                 cumulative_size += file_info.get('Size', 0)
         except Exception:
             # If there's an error, we'll just return 0 as the size
-            pass
+            raise
         return cumulative_size
     
     def _parse_time(self, time_str: str) -> datetime:
@@ -160,10 +167,6 @@ class RcloneFS(FS):
             if not recreate:
                 raise DirectoryExists(path)
 
-    def openbin(self, path: str, mode="r", buffering=-1, **options):
-        path = normpath(path)
-        raise NotImplementedError("openbin is not implemented for RcloneFS")
-
     def remove(self, path: str):
         path = normpath(path)
         if self.isdir(path):
@@ -192,18 +195,43 @@ class RcloneFS(FS):
             # fallback
             raise
 
+    def removetree(self, path: str):
+        path = normpath(path)
+        if not self.exists(path):
+            raise ResourceNotFound(path)
+        if not self.isdir(path):
+            raise DirectoryExpected(path)
+        try:
+            self.rclone.purge(self._path(path))
+        except Exception as e:
+            msg = str(e)
+            if 'not found' in msg:
+                raise ResourceNotFound(path)
+            # fallback
+            raise
+
     def setinfo(self, path: str, info):
         path = normpath(path)
         # RClone doesn't provide a direct way to set file info
         # You might need to implement this differently based on your needs
-        pass
-
-    def upload(self, path: str, file):
+        raise NotImplementedError("setinfo is not implemented for RcloneFS")
+    
+    def openbin(self, path: str, mode="r", buffering=-1, **options):
         path = normpath(path)
-        local_path = file.name
-        self.rclone.copy(local_path, self._path(path))
+        return RcloneFile(self, path, mode)
 
-    def download(self, path: str, file):
+    def upload(self, path: str, file, chunk_size=None, **options):
+        path = normpath(path)
+        parent_dir, name = split(path)
+        local_path = file.name
+
+        if not parent_dir == '' and not self.exists(parent_dir):
+            raise ResourceNotFound(parent_dir)
+            
+        self.rclone.copyto(local_path, self._path(path))
+        
+
+    def download(self, path: str, file, chunk_size=None, **options):
         path = normpath(path)
         local_path = file.name
         self.rclone.copy(self._path(path), local_path)

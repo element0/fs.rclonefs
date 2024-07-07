@@ -29,6 +29,9 @@ class Rclone:
     def copy(self, source, destination, flags=None):
         self._run_command(["copy", source, destination], flags)
 
+    def copyto(self, source, destination, flags=None):
+        self._run_command(["copyto", source, destination], flags)
+
     def move(self, source, destination, flags=None):
         self._run_command(["move", source, destination], flags)
 
