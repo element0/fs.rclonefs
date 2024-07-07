@@ -214,24 +214,28 @@ class RcloneFS(FS):
         path = normpath(path)
         # RClone doesn't provide a direct way to set file info
         # You might need to implement this differently based on your needs
-        raise NotImplementedError("setinfo is not implemented for RcloneFS")
+        # raise NotImplementedError("setinfo is not implemented for RcloneFS")
+        pass
+        # not implemented with rclone
     
     def openbin(self, path: str, mode="r", buffering=-1, **options):
         path = normpath(path)
+        # return self.temp_fs.openbin(path, mode, buffering, **options)
         return RcloneFile(self, path, mode)
 
     def upload(self, path: str, file, chunk_size=None, **options):
         path = normpath(path)
         parent_dir, name = split(path)
-        local_path = file.name
+        local_path = str(file.name, encoding='utf-8')
 
         if not parent_dir == '' and not self.exists(parent_dir):
             raise ResourceNotFound(parent_dir)
-            
+
         self.rclone.copyto(local_path, self._path(path))
         
 
     def download(self, path: str, file, chunk_size=None, **options):
         path = normpath(path)
         local_path = file.name
-        self.rclone.copy(self._path(path), local_path)
+        self.rclone.copyto(self._path(path), str(local_path, encoding='utf-8'))
+        

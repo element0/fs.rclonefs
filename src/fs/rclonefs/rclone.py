@@ -70,5 +70,4 @@ class Rclone:
             output = self._run_command(["about", remote, "--json"], flags)
             return json.loads(output)
         except Exception as e:
-            print(f"Failed to get remote info: {e}")
             return {}
