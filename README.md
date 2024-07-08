@@ -1,7 +1,7 @@
 # Access rclone from a pyfilesystem interface
 I needed this.
 
-__version__ = 0.3.1
+__version__ = 0.5.0
 
 
 
@@ -17,6 +17,9 @@ This assumes you've run the external program `rclone config` and configured a re
     >>> from fs.rclonefs import RcloneFS
     >>> my_remote = RcloneFS('dropbox:')
     >>> my_remote.listdir('/')
+
+More examples:
+
     >>> my_remote.getinfo('/that file over there.mp4')
     >>> my_remote.remove('/that file over there.mp4')
     >>> my_remote.getinfo('/some folder', namespaces=['details'])
@@ -25,24 +28,40 @@ Use the 'storage' namespace to report directory sizes.
 
     >>> my_remote.getinfo('/gigantor', namespaces=['storage'])
 
-The `removetree()` method uses rclone's `purge` command -- which should make quick work of directories and their contents -- really quick work if the rclone backend supports the command (Dropbox does). (The pyfilesystem default does a path walk and removes every item individually which causes a storm of API calls to the backend and takes forever to complete with large trees, leaving rclone running for several minutes and keeping you hanging.) 
+The `removetree()` method uses rclone's `purge` command -- which should make quick work of directories and their contents -- really quick work if the rclone backend supports the purge command (like Dropbox does).
+
+(The pyfilesystem default of `removetree()` does a path walk and removes every item individually which causes a lot of calls to the backend and takes a long time to complete large trees, leaving rclone busy for several minutes and keeping you hanging.) 
 
 ### USE AT YOUR OWN RISK
 
-Things might not work as expected. Like any other household product, you should test it on a small out-of-the-way piece of material first before dumping it all over everything.
+Things might not work as expected. Like any other household product, you should test it on a small out-of-the-way place first before dumping it all over everything.
+
+I went ahead and ran the tests on my personal dropbox...
+
+Most tests failed, BTW. But, the simple stuff, listed below works.
 
 ### Status
 
-Implemented:
+Working:
 - getinfo()
 - listdir()
+- isdir()/isfile()
+- exists()
 - remove()
 - removedir()
 - removetree()
+- writetext()
+- readtext()
 
-TBD:
+TODO:
 - URI opener
-- all other methods
+- address unittest failures
+- make copy methods efficient between reclone remotes
+  (Currently we rely on a TempFS to cache files,
+  which is in addition to whatever caching is being
+  done by rclone already, so we're looking at multiple
+  copies being made if we use two pyfilesystem instances
+  and try to copy between them.)
 
 ## Dependencies
 
@@ -82,6 +101,8 @@ It takes one or more filenames from the working directory (without the .ipynb ex
 
 
 ## Changelog
+
+0.5.0 Implement `openbin()` and internal file handles to support `writetext()` and `readtext()` methods. Implement `upload()` and `download()` methods also. Add unittest `tests.py` -- (in src folder, not tests folder).
 
 0.4.0 Add `remove()`, `removedir()`, `removetree()`. Add `Rclone` class. Add `storage` namespace for getinfo(). Fix datetime format in getinfo.
 

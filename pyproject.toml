@@ -3,13 +3,13 @@
 
 [project]
 name = "fs.rclonefs"
-version = "0.4.0"
+version = "0.5.0"
 authors = [
     { name="Raygan Henley", email="raygan@raygan.com" },
 ]
 description = "Pyfilesystem interface to control rclone remotes."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
