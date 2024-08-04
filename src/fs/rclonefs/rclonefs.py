@@ -11,9 +11,13 @@ import json
 from typing import List, Union, Optional
 from fs.tempfs import TempFS
 
-from rclone import Rclone  # Assuming this is how you've imported the previous class
-from file import RcloneFile
-
+if __name__ == '__main__':
+    from rclone import Rclone
+    from file import RcloneFile
+else:
+    from .rclone import Rclone
+    from .file import RcloneFile
+    
 class RcloneFS(FS):
     def __init__(self, remote: str, rclone: Optional[Rclone] = None, config_file: Optional[str] = None):
         super().__init__()

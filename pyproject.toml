@@ -3,7 +3,7 @@
 
 [project]
 name = "fs.rclonefs"
-version = "0.5.0"
+version = "0.5.1"
 authors = [
     { name="Raygan Henley", email="raygan@raygan.com" },
 ]
@@ -30,6 +30,10 @@ Issues = "https://github.com/element0/fs.rclonefs/issues"
 
 [tool.hatch.version]
 path = "src/fs.rclonefs/__init__.py"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/fs"]
-
+exclude = [
+    "*.ipynb",
+    "tests.py"
+]

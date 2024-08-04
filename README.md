@@ -1,7 +1,6 @@
 # Access rclone from a pyfilesystem interface
-I needed this.
 
-__version__ = 0.5.0
+__version__ = 0.5.1
 
 
 
@@ -24,21 +23,21 @@ More examples:
     >>> my_remote.remove('/that file over there.mp4')
     >>> my_remote.getinfo('/some folder', namespaces=['details'])
 
-Use the 'storage' namespace to report directory sizes.
+Use the 'storage' namespace to get directory sizes.
 
     >>> my_remote.getinfo('/gigantor', namespaces=['storage'])
 
 The `removetree()` method uses rclone's `purge` command -- which should make quick work of directories and their contents -- really quick work if the rclone backend supports the purge command (like Dropbox does).
 
-(The pyfilesystem default of `removetree()` does a path walk and removes every item individually which causes a lot of calls to the backend and takes a long time to complete large trees, leaving rclone busy for several minutes and keeping you hanging.) 
+(The pyfilesystem default `removetree()` does a path walk and removes every item individually which causes a lot of calls to the rclone backend and takes a long time to complete large trees, tying up rclone for several minutes.)
 
 ### USE AT YOUR OWN RISK
 
 Things might not work as expected. Like any other household product, you should test it on a small out-of-the-way place first before dumping it all over everything.
 
-I went ahead and ran the tests on my personal dropbox...
+I went ahead and ran the pyfilesystem tests on my personal dropbox...
 
-Most tests failed, BTW. But, the simple stuff, listed below works.
+The simple stuff, listed below, works.
 
 ### Status
 
@@ -55,7 +54,7 @@ Working:
 
 TODO:
 - URI opener
-- address unittest failures
+- address pyfilesystem unittest failures
 - make copy methods efficient between reclone remotes
   (Currently we rely on a TempFS to cache files,
   which is in addition to whatever caching is being
@@ -90,17 +89,10 @@ The `Rclone` object class controls `rclone` on your system.
     >>>rclone.list_files('myremote:')
 
 
-A `makepy` tool in the tools directory extracts the second cell from a jupyter notebook and saves it as a python file.
-
-    >>> from makepy import makepy
-    >>> makepy('rclonefs','opener')
-
-It takes one or more filenames from the working directory (without the .ipynb extension) and exports the 2nd cell of each to python files with the same base names.
-
-(`makepy` is not packaged with the pip distro. Find it in the git repo.)
-
 
 ## Changelog
+
+0.5.1 Fixed relative import issue that prevented module from loading.
 
 0.5.0 Implement `openbin()` and internal file handles to support `writetext()` and `readtext()` methods. Implement `upload()` and `download()` methods also. Add unittest `tests.py` -- (in src folder, not tests folder).
 
